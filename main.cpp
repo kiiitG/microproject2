@@ -33,6 +33,8 @@ void* Writer(void* param) {
             printf("[%fs Writer %d] computes value = %d\n", diff.count(), id, data);
             
             index = rand() % N;
+
+            // Запись данных.
             dataBase[index] = data;
             time = std::chrono::steady_clock::now();
             diff = time - start;
@@ -53,12 +55,14 @@ void* Reader(void* param) {
     std::chrono::duration<double> diff;
     while (clock() < 10000) {
         sem_post(&reader_sem);
+
         index = rand() % N;
         time = std::chrono::steady_clock::now();
         diff = time - start;
 
         printf("[%fs Reader %d] computes index = %d\n", diff.count(), id, index);
         
+        // Чтение данных.
         data = dataBase[index];
         time = std::chrono::steady_clock::now();
         diff = time - start;
@@ -72,14 +76,17 @@ void* Reader(void* param) {
 }
 
 int main() {
+    // Установка seed и начала работы программы.
     srand(clock());
     start = std::chrono::steady_clock::now();
 
+    // Инициализация семафоров.
     sem_init(&reader_sem, 0, 0);
     sem_init(&writer_sem, 0, 1);
 
     int i;
 
+    // Создание и запуск потоков-писаталей.
     pthread_t wThread[WRITER_COUNT];
     int writer[WRITER_COUNT];
     for (i = 0; i < WRITER_COUNT; i++) {
@@ -87,6 +94,7 @@ int main() {
         pthread_create(&wThread[i], nullptr, Writer, (void*)(writer + i));
     }
 
+    // Создание и запуск потоков-читателей.
     pthread_t rThread[READER_COUNT];
     int reader[READER_COUNT];
     for (i = 0; i < READER_COUNT; i++) {
@@ -94,6 +102,7 @@ int main() {
         pthread_create(&rThread[i], nullptr, Reader, (void*)(reader + i));
     }
 
+    // Главный поток является писателем.
     int mId = 0;
     Writer((void*)&mId);
 
